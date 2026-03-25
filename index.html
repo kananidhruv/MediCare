@@ -471,6 +471,25 @@
     .empty-state h4    { font-size: 1.05rem; font-weight: 600; }
     .empty-state p     { font-size: .85rem; margin-top: 6px; }
 
+    /* ========== LOGIN ========== */
+    .login-container {
+      position: fixed; inset: 0;
+      background: var(--bg);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000;
+    }
+    .login-box {
+      background: var(--surface);
+      padding: 40px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-lg);
+      width: 100%; max-width: 400px;
+      text-align: center;
+    }
+    .login-box h2 { font-size: 1.8rem; font-weight: 700; color: var(--text); margin-bottom: 24px; }
+    .login-box h2 span { color: var(--accent); }
+    .hidden { display: none !important; }
+
     /* ========== SIDEBAR OVERLAY (MOBILE) ========== */
     .sidebar-overlay {
       display: none;
@@ -516,8 +535,27 @@
 <!-- ===== SIDEBAR OVERLAY ===== -->
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
+<!-- ===== LOGIN CONTAINER ===== -->
+<div class="login-container" id="login-container">
+  <div class="login-box">
+    <h2>Medi<span>Care</span> Admin</h2>
+    <form id="login-form" onsubmit="handleLogin(event)" style="text-align: left;">
+      <div class="form-group" style="margin-bottom: 16px;">
+        <label for="login-user">Username</label>
+        <input type="text" id="login-user" required autocomplete="username"/>
+      </div>
+      <div class="form-group" style="margin-bottom: 24px;">
+        <label for="login-pass">Password</label>
+        <input type="password" id="login-pass" required autocomplete="current-password"/>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Sign In</button>
+    </form>
+  </div>
+</div>
+
 <!-- ===== LAYOUT ===== -->
-<div class="layout">
+<div class="layout hidden" id="app-layout">
+
 
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
@@ -550,6 +588,12 @@
         Patient List
       </div>
     </nav>
+    <div class="nav-item" onclick="handleLogout()" style="color: #ef4444; border-top: 1px solid rgba(255,255,255,.1); margin-top: auto;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+      </svg>
+      Logout
+    </div>
 
     <!-- PWA Install button — shown when browser supports install prompt -->
     <button id="install-btn" onclick="installPWA()" style="
@@ -1320,8 +1364,38 @@ function setCurrentDate() {
   });
 }
 
-// ---- INIT ----
-document.addEventListener('DOMContentLoaded', () => {
+// ---- AUTHENTICATION ----
+function checkAuth() {
+  if (sessionStorage.getItem('medicare_admin_auth') === 'true') {
+    document.getElementById('login-container').classList.add('hidden');
+    document.getElementById('app-layout').classList.remove('hidden');
+    return true;
+  }
+  return false;
+}
+
+function handleLogin(e) {
+  e.preventDefault();
+  const user = document.getElementById('login-user').value;
+  const pass = document.getElementById('login-pass').value;
+  
+  if (user === 'admin' && pass === 'admin') {
+    sessionStorage.setItem('medicare_admin_auth', 'true');
+    document.getElementById('login-container').classList.add('hidden');
+    document.getElementById('app-layout').classList.remove('hidden');
+    toast('Welcome back, Admin!', 'success');
+    initApp();
+  } else {
+    toast('Invalid username or password', 'error');
+  }
+}
+
+function handleLogout() {
+  sessionStorage.removeItem('medicare_admin_auth');
+  window.location.reload();
+}
+
+function initApp() {
   setCurrentDate();
   renderDashboard();
 
@@ -1329,6 +1403,13 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('confirm-modal').addEventListener('click', function(e) {
     if (e.target === this) closeModal();
   });
+}
+
+// ---- INIT ----
+document.addEventListener('DOMContentLoaded', () => {
+  if (checkAuth()) {
+    initApp();
+  }
 });
 </script>
 
